@@ -34,7 +34,7 @@ class action_plugin_authvk extends DokuWiki_Action_Plugin {
 		$vk_admin_id = $this->getConf('admin_id');
 		$vk_group_id_of_admins = $this->getConf('group_id_of_admins');
 		$vk_group_id_of_moderators = $this->getConf('group_id_of_moderators');
-		$group_id_of_users = $this->getConf('group_id_of_users');
+		$vk_group_id_of_users = $this->getConf('group_id_of_users');
 			
 		$vk_url = 'http://oauth.vk.com/authorize';
 		
@@ -64,7 +64,7 @@ class action_plugin_authvk extends DokuWiki_Action_Plugin {
 			}
 
 			$vk_group_params = array(
-					'group_id' => $group_id_of_admins,
+					'group_id' => $vk_group_id_of_admins,
 					'user_id' => $vk_userInfo['uid'],
 					'extended' => '1'
 				);
@@ -72,7 +72,7 @@ class action_plugin_authvk extends DokuWiki_Action_Plugin {
 			$vk_group_id_of_admins_Info = json_decode(file_get_contents('https://api.vk.com/method/groups.isMember' . '?' . htmlspecialchars_decode(urldecode(http_build_query($vk_group_params)) )), true);
 			
 			$vk_group_params = array(
-					'group_id' => $group_id_of_moderators,
+					'group_id' => $vk_group_id_of_moderators,
 					'user_id' => $vk_userInfo['uid'],
 					'extended' => '1'
 				);
@@ -80,7 +80,7 @@ class action_plugin_authvk extends DokuWiki_Action_Plugin {
 			$vk_group_id_of_moderators_Info = json_decode(file_get_contents('https://api.vk.com/method/groups.isMember' . '?' . htmlspecialchars_decode(urldecode(http_build_query($vk_group_params)) )), true);
 			
 			$vk_group_params = array(
-					'group_id' => $group_id_of_users,
+					'group_id' => $vk_group_id_of_users,
 					'user_id' => $vk_userInfo['uid'],
 					'extended' => '1'
 				);
@@ -125,7 +125,7 @@ class action_plugin_authvk extends DokuWiki_Action_Plugin {
 					$USERINFO['grps'] = array('group','user');
 				if ($vk_userInfo['uid']==$vk_admin_id) 
 					$USERINFO['grps'] = array('admin','user');
-				if ($vk_group_id_of_admin_Info['response']['member']==1) 
+				if ($vk_group_id_of_admins_Info['response']['member']==1) 
 					$USERINFO['grps'] = array('admin','user');
 				
 
@@ -196,15 +196,4 @@ class action_plugin_authvk extends DokuWiki_Action_Plugin {
         send_redirect($url);
     }	
 }
-
-
-
-
-
-
-
-
-
-
-
 
