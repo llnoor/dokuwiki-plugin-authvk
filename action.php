@@ -87,7 +87,7 @@ class action_plugin_authvk extends DokuWiki_Action_Plugin {
 			
 			$vk_group_id_of_users_Info = json_decode(file_get_contents('https://api.vk.com/method/groups.isMember' . '?' . htmlspecialchars_decode(urldecode(http_build_query($vk_group_params)) )), true);
 					
-			if ($group_id_of_users ==0) {
+			if ($vk_group_id_of_users ==0) {
 				$vk_result = true;
 			}elseif (($vk_group_id_of_users_Info['response']['member'] ==1) 
 					or (($vk_group_id_of_moderators_Info['response']['member'] ==1) 
@@ -142,7 +142,7 @@ class action_plugin_authvk extends DokuWiki_Action_Plugin {
 				echo "date: " . $vk_userInfo['bdate'] . '<br />';
 				echo '<img src="' . $vk_userInfo['photo_big'] . '" />'; echo "<br />";*/
 			}else{
-				msg($this->getLang('vk_sorry'));
+				msg($this->getLang('vk_sorry').'<a href="https://vk.com/club' . $vk_group_id_of_users .  '">VK_group</a>');
 			}
 			
 			
