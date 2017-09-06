@@ -5,3 +5,4 @@ date   2017-08-16
 name   Vk Authentication Plugin
 desc   Provides user authentication using vk OAuth 2.0
 url    https://www.dokuwiki.org/plugin:authvk
+ 

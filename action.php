@@ -5,7 +5,7 @@
  * @license GPL 2 http://www.gnu.org/licenses/gpl-2.0.html
  * @author  Ilnur Gimazov <ubvfp94@mail.ru>
  */
-
+  
 // must be run within Dokuwiki
 if(!defined('DOKU_INC')) die();
 
