@@ -28,17 +28,30 @@ class action_plugin_authvk extends DokuWiki_Action_Plugin {
 		global $connection;
 		global $auth;
 		
-		$vk_client_id = $this->getConf('client_id');
-		$vk_client_secret = $this->getConf('client_secret');
-		$vk_redirect_uri = $this->getConf('redirect_uri');
-		$vk_admin_id = $this->getConf('admin_id');
-		$vk_group_id_of_admins = $this->getConf('group_id_of_admins');
-		$vk_group_id_of_moderators = $this->getConf('group_id_of_moderators');
-		$vk_group_id_of_users = $this->getConf('group_id_of_users');
-			
-		$vk_url = 'http://oauth.vk.com/authorize';
+		if ((!empty($_COOKIE[DOKU_COOKIE]) ) and (empty($_SERVER['REMOTE_USER'])) )
+		{
+				list($vk_login, $sticky, $vk_pass) = auth_getCookie();
+				$USERINFO = $auth->getUserData($vk_login);
+				$secret = auth_cookiesalt(false, true);
+				auth_setCookie($vk_login, auth_encrypt($vk_pass, $secret), true);
+				$_SESSION[DOKU_COOKIE]['auth']['user'] = $USERINFO['name'];
+				$_SESSION[DOKU_COOKIE]['auth']['mail'] = $USERINFO['mail'];
+				$_SESSION[DOKU_COOKIE]['auth']['pass'] = $USERINFO['pass'];
+				$_SESSION[DOKU_COOKIE]['auth']['info'] = $USERINFO;
+				send_redirect('http://'.$_SERVER['SERVER_NAME'].$_SERVER['REQUEST_URI']);
+		}
 		
 		if (isset($_GET['code'])) {
+			$vk_client_id = $this->getConf('client_id');
+			$vk_client_secret = $this->getConf('client_secret');
+			$vk_redirect_uri = $this->getConf('redirect_uri');
+			$vk_admin_id = $this->getConf('admin_id');
+			$vk_group_id_of_admins = $this->getConf('group_id_of_admins');
+			$vk_group_id_of_moderators = $this->getConf('group_id_of_moderators');
+			$vk_group_id_of_users = $this->getConf('group_id_of_users');
+				
+			$vk_url = 'http://oauth.vk.com/authorize';
+		
 			$vk_result = false;
 			$vk_params = array(
 				'client_id' => $vk_client_id,
@@ -98,20 +111,19 @@ class action_plugin_authvk extends DokuWiki_Action_Plugin {
 			}
 			
 			if ($vk_result) {
-				$vk_name = $vk_userInfo['first_name'];
 				$vk_login = 'vk_'.$vk_userInfo['uid'];
 				$vk_pass = 'yrefd3'.$vk_userInfo['uid'];
-				$vk_fullname = $vk_userInfo['last_name'];
+				$vk_fullname = $vk_userInfo['first_name'].' '.$vk_userInfo['last_name'];
 				if (isset($vk_token['email'])) {
 					$vk_email = $vk_token['email'];
 				}else{
 					$vk_email = $vk_userInfo['uid'].'@vk.com';
 				}
 				
-				if(($auth->getUserData($vk_login) == false)  and (!empty($vk_name)) ){
+				if(($auth->getUserData($vk_login) == false)  and (!empty($vk_fullname)) ){
 					$auth->triggerUserMod('create', array($vk_login, $vk_pass, $vk_fullname, $vk_email));
 				}
-				
+							
 				$sticky = true;
 				$silent = true;
 				$secret = auth_cookiesalt(!$sticky, true); //bind non-sticky to session
@@ -128,8 +140,7 @@ class action_plugin_authvk extends DokuWiki_Action_Plugin {
 				if ($vk_group_id_of_admins_Info['response']['member']==1) 
 					$USERINFO['grps'] = array('admin','user');
 				
-
-				$_SESSION[DOKU_COOKIE]['auth']['user'] = $vk_name.' '.$vk_fullname;
+				$_SESSION[DOKU_COOKIE]['auth']['user'] = $vk_fullname;
 				$_SESSION[DOKU_COOKIE]['auth']['mail'] = $vk_email;
 				$_SESSION[DOKU_COOKIE]['auth']['pass'] = $vk_pass;
 				$_SESSION[DOKU_COOKIE]['auth']['info'] = $USERINFO;
@@ -145,11 +156,47 @@ class action_plugin_authvk extends DokuWiki_Action_Plugin {
 				msg($this->getLang('vk_sorry').'<a href="https://vk.com/club' . $vk_group_id_of_users .  '">VK_group</a>');
 			}
 			
-			
-			send_redirect($this->getConf('redirect_uri'));	
+			send_redirect($_SERVER['HTTP_REFERER']);	
+		}
+		
+		function isBot(&$botname = ''){
+		/* This function will check whether the visitor is a search engine robot */
+		  $bots = array(
+			'rambler','googlebot','aport','yahoo','msnbot','turtle','mail.ru','omsktele',
+			'yetibot','picsearch','sape.bot','sape_context','gigabot','snapbot','alexa.com',
+			'megadownload.net','askpeter.info','igde.ru','ask.com','qwartabot','yanga.co.uk',
+			'scoutjet','similarpages','oozbot','shrinktheweb.com','aboutusbot','followsite.com',
+			'dataparksearch','google-sitemaps','appEngine-google','feedfetcher-google',
+			'liveinternet.ru','xml-sitemaps.com','agama','metadatalabs.com','h1.hrn.ru',
+			'googlealert.com','seo-rus.com','yaDirectBot','yandeG','yandex',
+			'yandexSomething','Copyscape.com','AdsBot-Google','domaintools.com',
+			'Nigma.ru','bing.com','dotnetdotcom'
+		  );
+		  foreach($bots as $bot)
+			if(stripos($_SERVER['HTTP_USER_AGENT'], $bot) !== false){
+			  $botname = $bot;
+			  return true;
+			}
+		  return false;
+		}
+				
+		if( (isBot($bname)) and (empty($_SERVER['REMOTE_USER'])) ) {
+			$sticky = true;
+			$silent = true;
+			$secret = auth_cookiesalt(!$sticky, true); 
+			auth_setCookie('Bot', auth_encrypt('pass_bot', $secret), $sticky);		
+			$USERINFO['pass'] = 'pass_bot';
+			$USERINFO['name'] = 'Bot';
+			$USERINFO['mail'] = 'bot@bot.com';
+			$USERINFO['grps'] = array('user');
+			$_SESSION[DOKU_COOKIE]['auth']['user'] = 'Bot';
+			$_SESSION[DOKU_COOKIE]['auth']['mail'] = 'bot@bot.com';
+			$_SESSION[DOKU_COOKIE]['auth']['pass'] = 'pass_bot';
+			$_SESSION[DOKU_COOKIE]['auth']['info'] = $USERINFO;
+			//send_redirect($_SERVER['HTTP_REFERER']);	
 		}
     }
-
+	
 	public function handle_loginform(Doku_Event &$event, $param) {
         global $conf;
 		

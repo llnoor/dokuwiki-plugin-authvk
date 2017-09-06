@@ -45,8 +45,8 @@ class auth_plugin_authvk extends DokuWiki_Auth_Plugin {
 		global $conf;
 		global $connection;
  
-		$sticky ? $sticky = true : $sticky = false; //sanity check
- 
+		$sticky = true;
+		
 		if (!empty($_SESSION[DOKU_COOKIE]['auth']['info'])) {
 			$USERINFO['name'] = $_SESSION[DOKU_COOKIE]['auth']['info']['user'];
 			$USERINFO['mail'] = $_SESSION[DOKU_COOKIE]['auth']['info']['mail'];
@@ -70,15 +70,12 @@ class auth_plugin_authvk extends DokuWiki_Auth_Plugin {
 			$USERINFO['grps'] = $login['name'] == 'Admin' ? array('admin','user'): array( 'user');
 			
 			$_SERVER['REMOTE_USER'] = $login['name'];
-			$_SESSION[DOKU_COOKIE]['auth']['user'] = $login['name'];
+			/*$_SESSION[DOKU_COOKIE]['auth']['user'] = $login['name'];
 			$_SESSION[DOKU_COOKIE]['auth']['mail'] = $login['email'];
 			$_SESSION[DOKU_COOKIE]['auth']['pass'] = $pass;
-			$_SESSION[DOKU_COOKIE]['auth']['info'] = $USERINFO;
+			$_SESSION[DOKU_COOKIE]['auth']['info'] = $USERINFO;*/
 			return true;
-		} else {
-			return false;
-		}
- 
+		}  
 	}
  
     /**
