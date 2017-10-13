@@ -5,7 +5,7 @@
  * @license GPL 2 http://www.gnu.org/licenses/gpl-2.0.html
  * @author  Ilnur Gimazov <ubvfp94@mail.ru>
  */
-  
+
 // must be run within Dokuwiki
 if(!defined('DOKU_INC')) die();
 
@@ -28,18 +28,7 @@ class action_plugin_authvk extends DokuWiki_Action_Plugin {
 		global $connection;
 		global $auth;
 		
-		if ((!empty($_COOKIE[DOKU_COOKIE]) ) and (empty($_SERVER['REMOTE_USER'])) )
-		{
-				list($vk_login, $sticky, $vk_pass) = auth_getCookie();
-				$USERINFO = $auth->getUserData($vk_login);
-				$secret = auth_cookiesalt(false, true);
-				auth_setCookie($vk_login, auth_encrypt($vk_pass, $secret), true);
-				$_SESSION[DOKU_COOKIE]['auth']['user'] = $USERINFO['name'];
-				$_SESSION[DOKU_COOKIE]['auth']['mail'] = $USERINFO['mail'];
-				$_SESSION[DOKU_COOKIE]['auth']['pass'] = $USERINFO['pass'];
-				$_SESSION[DOKU_COOKIE]['auth']['info'] = $USERINFO;
-				send_redirect('http://'.$_SERVER['SERVER_NAME'].$_SERVER['REQUEST_URI']);
-		}
+		
 		
 		if (isset($_GET['code'])) {
 			$vk_client_id = $this->getConf('client_id');
@@ -101,7 +90,7 @@ class action_plugin_authvk extends DokuWiki_Action_Plugin {
 			$vk_group_id_of_users_Info = json_decode(file_get_contents('https://api.vk.com/method/groups.isMember' . '?' . htmlspecialchars_decode(urldecode(http_build_query($vk_group_params)) )), true);
 					
 			if ($vk_group_id_of_users ==0) {
-				$vk_result = true;
+				$vk_result = true; 
 			}elseif (($vk_group_id_of_users_Info['response']['member'] ==1) 
 					or (($vk_group_id_of_moderators_Info['response']['member'] ==1) 
 					or ($vk_group_id_of_admin_Info['response']['member'] ==1))) {
@@ -157,10 +146,35 @@ class action_plugin_authvk extends DokuWiki_Action_Plugin {
 			}
 			
 			send_redirect($_SERVER['HTTP_REFERER']);	
+			//send_redirect('http://'.$_SERVER['SERVER_NAME']);
 		}
 		
-		function isBot(&$botname = ''){
-		/* This function will check whether the visitor is a search engine robot */
+		
+		
+		
+		/*if ((!empty($_COOKIE[DOKU_COOKIE]) ) and (empty($_SERVER['REMOTE_USER'])) )
+		{
+				list($vk_login, $sticky, $vk_pass) = auth_getCookie();
+				$USERINFO = $auth->getUserData($vk_login);
+				$secret = auth_cookiesalt(false, true);
+				auth_setCookie($vk_login, auth_encrypt($vk_pass, $secret), true);
+				$_SESSION[DOKU_COOKIE]['auth']['user'] = $USERINFO['name'];
+				$_SESSION[DOKU_COOKIE]['auth']['mail'] = $USERINFO['mail'];
+				$_SESSION[DOKU_COOKIE]['auth']['pass'] = $USERINFO['pass'];
+				$_SESSION[DOKU_COOKIE]['auth']['info'] = $USERINFO;
+				send_redirect('http://'.$_SERVER['SERVER_NAME'].$_SERVER['REQUEST_URI']);
+				//send_redirect('http://'.$_SERVER['SERVER_NAME']);
+		}*/
+		
+		/*if (empty($_SERVER['REMOTE_USER']))
+		{
+			send_redirect('http://'.$_SERVER['SERVER_NAME']."/start?do=login");
+			
+		}*/
+		
+		
+		/*function isBot(&$botname = ''){
+		// This function will check whether the visitor is a search engine robot 
 		  $bots = array(
 			'rambler','googlebot','aport','yahoo','msnbot','turtle','mail.ru','omsktele',
 			'yetibot','picsearch','sape.bot','sape_context','gigabot','snapbot','alexa.com',
@@ -178,9 +192,9 @@ class action_plugin_authvk extends DokuWiki_Action_Plugin {
 			  return true;
 			}
 		  return false;
-		}
+		}*/
 				
-		if( (isBot($bname)) and (empty($_SERVER['REMOTE_USER'])) ) {
+		/*if( (isBot($bname)) and (empty($_SERVER['REMOTE_USER'])) ) {
 			$sticky = true;
 			$silent = true;
 			$secret = auth_cookiesalt(!$sticky, true); 
@@ -194,7 +208,7 @@ class action_plugin_authvk extends DokuWiki_Action_Plugin {
 			$_SESSION[DOKU_COOKIE]['auth']['pass'] = 'pass_bot';
 			$_SESSION[DOKU_COOKIE]['auth']['info'] = $USERINFO;
 			//send_redirect($_SERVER['HTTP_REFERER']);	
-		}
+		}*/
     }
 	
 	public function handle_loginform(Doku_Event &$event, $param) {
