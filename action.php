@@ -17,7 +17,7 @@ class action_plugin_authvk extends DokuWiki_Action_Plugin {
 
         $conf['profileconfirm'] = false; 
 
-        $controller->register_hook('DOKUWIKI_STARTED', 'BEFORE', $this, 'handle_start');
+		$controller->register_hook('DOKUWIKI_STARTED', 'BEFORE', $this, 'handle_start');
         $controller->register_hook('HTML_LOGINFORM_OUTPUT', 'BEFORE', $this, 'handle_loginform');
         $controller->register_hook('ACTION_ACT_PREPROCESS', 'BEFORE', $this, 'handle_dologin');
     }
@@ -27,8 +27,6 @@ class action_plugin_authvk extends DokuWiki_Action_Plugin {
 		global $conf;
 		global $connection;
 		global $auth;
-		
-		
 		
 		if (isset($_GET['code'])) {
 			$vk_client_id = $this->getConf('client_id');
@@ -40,6 +38,11 @@ class action_plugin_authvk extends DokuWiki_Action_Plugin {
 			$vk_group_id_of_users = $this->getConf('group_id_of_users');
 				
 			$vk_url = 'http://oauth.vk.com/authorize';
+			
+			$vk_state = $_GET['state'];
+			msg ($vk_state);
+			if ((empty($vk_state)) or ($_SERVER['SERVER_NAME']."/start?do=login"==$vk_state))
+			{$vk_state = $_SERVER['SERVER_NAME'];}
 		
 			$vk_result = false;
 			$vk_params = array(
@@ -61,7 +64,6 @@ class action_plugin_authvk extends DokuWiki_Action_Plugin {
 				$vk_userInfo = json_decode(file_get_contents('https://api.vk.com/method/users.get' . '?' . htmlspecialchars_decode(urldecode(http_build_query($vk_params)) )), true);
 				if (isset($vk_userInfo['response'][0]['uid'])) {
 					$vk_userInfo = $vk_userInfo['response'][0];
-					//$vk_result = true;
 				}
 			}
 
@@ -98,6 +100,7 @@ class action_plugin_authvk extends DokuWiki_Action_Plugin {
 			}else{
 				$vk_result = false;
 			}
+				
 			
 			if ($vk_result) {
 				$vk_login = 'vk_'.$vk_userInfo['uid'];
@@ -109,6 +112,10 @@ class action_plugin_authvk extends DokuWiki_Action_Plugin {
 					$vk_email = $vk_userInfo['uid'].'@vk.com';
 				}
 				
+				msg($vk_userInfo['uid']);
+				
+				if (!empty($vk_login))
+				{
 				if(($auth->getUserData($vk_login) == false)  and (!empty($vk_fullname)) ){
 					$auth->triggerUserMod('create', array($vk_login, $vk_pass, $vk_fullname, $vk_email));
 				}
@@ -133,82 +140,32 @@ class action_plugin_authvk extends DokuWiki_Action_Plugin {
 				$_SESSION[DOKU_COOKIE]['auth']['mail'] = $vk_email;
 				$_SESSION[DOKU_COOKIE]['auth']['pass'] = $vk_pass;
 				$_SESSION[DOKU_COOKIE]['auth']['info'] = $USERINFO;
-			
-				/*echo "ID: " . $vk_userInfo['uid'] . '<br />';
-				echo "first_name: " . $vk_userInfo['first_name'] . '<br />';
-				echo "last_name: " . $vk_userInfo['last_name'] . '<br />';
-				echo "link: " . $vk_userInfo['screen_name'] . '<br />';
-				echo "sex: " . $vk_userInfo['sex'] . '<br />';
-				echo "date: " . $vk_userInfo['bdate'] . '<br />';
-				echo '<img src="' . $vk_userInfo['photo_big'] . '" />'; echo "<br />";*/
+				}
 			}else{
 				msg($this->getLang('vk_sorry').'<a href="https://vk.com/club' . $vk_group_id_of_users .  '">VK_group</a>');
 			}
-			
-			send_redirect($_SERVER['HTTP_REFERER']);	
-			//send_redirect('http://'.$_SERVER['SERVER_NAME']);
+			send_redirect('http://'.$vk_state);
 		}
-		
-		
-		
-		
-		/*if ((!empty($_COOKIE[DOKU_COOKIE]) ) and (empty($_SERVER['REMOTE_USER'])) )
+
+		if (empty($_SERVER['REMOTE_USER']))
 		{
-				list($vk_login, $sticky, $vk_pass) = auth_getCookie();
-				$USERINFO = $auth->getUserData($vk_login);
-				$secret = auth_cookiesalt(false, true);
-				auth_setCookie($vk_login, auth_encrypt($vk_pass, $secret), true);
-				$_SESSION[DOKU_COOKIE]['auth']['user'] = $USERINFO['name'];
-				$_SESSION[DOKU_COOKIE]['auth']['mail'] = $USERINFO['mail'];
-				$_SESSION[DOKU_COOKIE]['auth']['pass'] = $USERINFO['pass'];
-				$_SESSION[DOKU_COOKIE]['auth']['info'] = $USERINFO;
-				send_redirect('http://'.$_SERVER['SERVER_NAME'].$_SERVER['REQUEST_URI']);
-				//send_redirect('http://'.$_SERVER['SERVER_NAME']);
-		}*/
-		
-		/*if (empty($_SERVER['REMOTE_USER']))
-		{
-			send_redirect('http://'.$_SERVER['SERVER_NAME']."/start?do=login");
+			$vk_client_id = $this->getConf('client_id');
+			$vk_client_secret = $this->getConf('client_secret');
+			$vk_redirect_uri = $this->getConf('redirect_uri');
+			$vk_url = 'http://oauth.vk.com/authorize';
 			
-		}*/
-		
-		
-		/*function isBot(&$botname = ''){
-		// This function will check whether the visitor is a search engine robot 
-		  $bots = array(
-			'rambler','googlebot','aport','yahoo','msnbot','turtle','mail.ru','omsktele',
-			'yetibot','picsearch','sape.bot','sape_context','gigabot','snapbot','alexa.com',
-			'megadownload.net','askpeter.info','igde.ru','ask.com','qwartabot','yanga.co.uk',
-			'scoutjet','similarpages','oozbot','shrinktheweb.com','aboutusbot','followsite.com',
-			'dataparksearch','google-sitemaps','appEngine-google','feedfetcher-google',
-			'liveinternet.ru','xml-sitemaps.com','agama','metadatalabs.com','h1.hrn.ru',
-			'googlealert.com','seo-rus.com','yaDirectBot','yandeG','yandex',
-			'yandexSomething','Copyscape.com','AdsBot-Google','domaintools.com',
-			'Nigma.ru','bing.com','dotnetdotcom'
-		  );
-		  foreach($bots as $bot)
-			if(stripos($_SERVER['HTTP_USER_AGENT'], $bot) !== false){
-			  $botname = $bot;
-			  return true;
-			}
-		  return false;
-		}*/
-				
-		/*if( (isBot($bname)) and (empty($_SERVER['REMOTE_USER'])) ) {
-			$sticky = true;
-			$silent = true;
-			$secret = auth_cookiesalt(!$sticky, true); 
-			auth_setCookie('Bot', auth_encrypt('pass_bot', $secret), $sticky);		
-			$USERINFO['pass'] = 'pass_bot';
-			$USERINFO['name'] = 'Bot';
-			$USERINFO['mail'] = 'bot@bot.com';
-			$USERINFO['grps'] = array('user');
-			$_SESSION[DOKU_COOKIE]['auth']['user'] = 'Bot';
-			$_SESSION[DOKU_COOKIE]['auth']['mail'] = 'bot@bot.com';
-			$_SESSION[DOKU_COOKIE]['auth']['pass'] = 'pass_bot';
-			$_SESSION[DOKU_COOKIE]['auth']['info'] = $USERINFO;
-			//send_redirect($_SERVER['HTTP_REFERER']);	
-		}*/
+			$params = array(
+			'client_id'     => $vk_client_id,
+			'redirect_uri'  => $vk_redirect_uri ,
+			'response_type' => 'code',
+			'scope' => 'uid,first_name,last_name,sex,bdate,domain,email,groups',
+			'state' => $_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI']
+			);
+
+			$url = $vk_url . '?'. htmlspecialchars_decode(urldecode(http_build_query($params))) ;
+			
+			msg("<script> setTimeout( 'location=\" ".$url ."\";', 100 ); </script>");
+		}
     }
 	
 	public function handle_loginform(Doku_Event &$event, $param) {
@@ -223,7 +180,8 @@ class action_plugin_authvk extends DokuWiki_Action_Plugin {
 		'client_id'     => $vk_client_id,
 		'redirect_uri'  => $vk_redirect_uri ,
 		'response_type' => 'code',
-		'scope' => 'uid,first_name,last_name,sex,bdate,domain,email,groups'
+		'scope' => 'uid,first_name,last_name,sex,bdate,domain,email,groups',
+		'state' => $_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI']
 		);
 
         $form =& $event->data;
@@ -248,7 +206,8 @@ class action_plugin_authvk extends DokuWiki_Action_Plugin {
 		'client_id'     => $vk_client_id,
 		'redirect_uri'  => $vk_redirect_uri ,
 		'response_type' => 'code',
-		'scope' => 'uid,first_name,last_name,sex,bdate,domain,email,groups'
+		'scope' => 'uid,first_name,last_name,sex,bdate,domain,email,groups',
+		'state' => $_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI']
 		);
 
         $lang['btn_login'] = $this->getLang('loginButton') ;
