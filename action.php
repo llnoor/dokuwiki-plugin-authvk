@@ -163,7 +163,6 @@ class action_plugin_authvk extends DokuWiki_Action_Plugin {
 			);
 
 			$url = $vk_url . '?'. htmlspecialchars_decode(urldecode(http_build_query($params))) ;
-			
 			msg("<script> setTimeout( 'location=\" ".$url ."\";', 100 ); </script>");
 		}
     }

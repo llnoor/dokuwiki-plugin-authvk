@@ -13,8 +13,6 @@ if(!defined('DOKU_INC')) die();
  */
 
  
- 
- 
 class auth_plugin_authvk extends DokuWiki_Auth_Plugin {
 
 	protected $users = null;
